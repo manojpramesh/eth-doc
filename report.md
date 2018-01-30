@@ -1,19 +1,14 @@
-# Audit report for Dadi Public Sale
-##### January 28 2018
-##### Prepared By: Manoj
+# Audit report for Public Sale
+##### Prepared By: Manoj <manojpramesh@gmail.com>
 
 ## Summary
 
-Audit Report prepared by Solidified for **Dadi** covering the public sale contracts.
+Audit Report prepared for an ICO covering the public sale contracts.
 
 
 ## Scope of the audit
 
-The audit was based on the solidity compiler *0.4.19+commit.c4cbbb05*. The scope of the audit is limited to the following source code file
-
-1. DadiPublicSale.sol
-
-Which contains the following libraries and contracts
+The audit was based on the solidity compiler *0.4.19+commit.c4cbbb05*. The scope of the audit is limited to the following contracts.
 
 1. SafeMath
 2. Ownable
@@ -21,20 +16,11 @@ Which contains the following libraries and contracts
 4. BasicToken
 5. ERC20
 6. StandardToken
-7. DadiPublicSale
+7. PublicSale
 
-
-## Issues with TokenDistribution
-### DadiPublicSale.sol
-
-Balances mapping in the StandardToken is empty during the token distribution. It can cause the distribution to fail during token transfer. This can be resolved by adding the total token supply to the mapping.
-
-```
-token.transfer(_address, tokens);
-```
 
 ## 1. Sales Wallet is not implemented properly
-### DadiPublicSale.sol / Line 232
+### PublicSale.sol / Line 232
 
 There is no option to remove the added address from salesWallet array. If any address is added accidently it cannot be removed and can potentially lead to the loss of funds.
 
@@ -80,7 +66,7 @@ This can be solved with any one of the following methods.
     ```
 2. Add an address to the `saleWallets` array during the contract initialization.
     ```
-    function DadiPublicSale (StandardToken _token, uint256 _tokenSupply) public {
+    function PublicSale (StandardToken _token, uint256 _tokenSupply) public {
         require(_token != address(0));
         require(_tokenSupply != 0);
         token = StandardToken(_token);
@@ -92,7 +78,7 @@ This can be solved with any one of the following methods.
 
 
 ## 3. Sale status is not fully checked
-### DadiPublicSale.sol
+### PublicSale.sol
 
 Several functions which modifies the contract state can be called before or after the sale has been started or completed. For example restarting the public sale with `startPublicSale` even after the sale is closed.
 
@@ -110,7 +96,7 @@ function distributeTokens (address _address) public onlyOwner saleShouldbe(SaleS
 ```
 
 ## 4. Older compiler version can lead to some bugs
-### DadiPublicSale.sol / Line 1
+### PublicSale.sol / Line 1
 
 ```
 pragma solidity ^0.4.11;
@@ -122,12 +108,12 @@ List of known compiler bugs and their severity can be found [here](https://ether
 
 
 ## 5. Use of older OpenZeppelin libraries
-### DadiPublicSale.sol / Line 7 - 31
+### PublicSale.sol / Line 7 - 31
 
 `SafeMath`, `ERC20Basic`, `BasicToken`, `ERC20`, `StandardToken` are outdated versions of OpenZepplin library. Update the libraries to the latest version which includes changes that can affect gas costs, some assertions and even reduce potential attack surface.
 
 ## 6. Install OpenZeppelin via NPM
-### DadiPublicSale.sol
+### PublicSale.sol
 
 `SafeMath`, `Ownable`, `ERC20Basic`, `ERC20`, `BasicToken`, and `StandardToken` were copied from the OpenZeppelin repository. OpenZeppelin’s MIT license requires the license and copyright notice to be included if its code is used, and makes it difficult and error-prone to update to a more recent version.
 
@@ -135,7 +121,7 @@ Consider following the recommended way to use OpenZeppelin contracts, which is v
 
 
 ## 7. Redundant owner declaration and assignment
-### DadiPublicSale.sol / Line 231 & 278
+### PublicSale.sol / Line 231 & 278
 
 ```
 address public owner;
@@ -143,11 +129,11 @@ address public owner;
 owner = msg.sender;
 ```
 
-owner address declaration and assignment is already taken care by the `Ownable` contract. This redundant declaration and assignment can be removed from `DadiPublicSale`.
+owner address declaration and assignment is already taken care by the `Ownable` contract. This redundant declaration and assignment can be removed from `PublicSale`.
 
 
 ## 8. Redundant function declaration to get tokensPurchased
-### DadiPublicSale.sol / Line 492 - 494
+### PublicSale.sol / Line 492 - 494
 
 Public variables generate a getter by default and the function to retrieve the same can be removed.
 
@@ -158,7 +144,7 @@ function getTokensPurchased () public constant returns (uint256) {
 ```
 
 ## 9. Reduntant msg.value check
-### DadiPublicSale.sol / Line 574
+### PublicSale.sol / Line 574
 
 `nonZero` modifier performs the msg.value check in the fallback function. The same check can be avoided in the `buyTokens` function.
 
@@ -168,7 +154,7 @@ require(msg.value > 0);
 
 
 ## 10. Use `view`/`pure` instead of `constant`
-### DadiPublicSale.sol
+### PublicSale.sol
 
 Make use of view/pure. Use view if your function does not modify storage and pure if it does not even read any state information.
 
@@ -199,7 +185,7 @@ function getRandom(uint max) internal constant returns (uint randomNumber)
 ```
 
 ## 11. Use modifiers
-### DadiPublicSale.sol
+### PublicSale.sol
 
 Make use of modifiers for checking the sale status, msg.value and gas cost.
 
@@ -215,7 +201,7 @@ function distributeTokens (address _address) public onlyOwner saleShouldbe(SaleS
 ```
 
 ## 12. Make use of the SafeMath library
-### DadiPublicSale.sol
+### PublicSale.sol
 
 In places of arithmatic operations we can make use of the SafeMath library. It is not needed everywhere, but it is a good practive to follow the same pattern throughout the contract.
 
@@ -226,7 +212,7 @@ tokens = _amount.mul(ethRate).div(tokenPrice);
 ```
 
 ## 13. Remove duplicate typecasting
-### DadiPublicSale.sol
+### PublicSale.sol
 
 Reduntant typecasting is performed in multiple places. This can be removed.
 
