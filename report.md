@@ -1,5 +1,5 @@
 # Audit report for BradyCoin
-February 6 2018
+February 5 2018
 
 
 ## Summary
@@ -20,7 +20,7 @@ The audit was based on the solidity compiler *0.4.19+commit.c4cbbb05*. The scope
 
 Unsafe arithmetic operations are carried out across the contract. This should be avoided to prevent integer underflow and overflow.
 
-```typescript=
+```
 balanceOf[seller]--;
 balanceOf[bid.bidder]++;
 ```
@@ -29,7 +29,7 @@ balanceOf[bid.bidder]++;
 
 Make use of [SafeMath](https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol) library by OpenZepplin. It strictly checks for integer overflow and underflow conditions which can potentially prevent loss of funds. Suggested code change is as follows
 
-```typescript=
+```
 // Import SafeMath
 import "./SafeMath.sol";
 
@@ -71,7 +71,7 @@ Older compilers might be susceptible to some bugs. List of known compiler bugs a
 
 It is always suggested to use the latest stable version of Solidity.
 
-```typescript=
+```
 pragma solidity ^0.4.19;
 ```
 
@@ -82,7 +82,7 @@ Redundant code is used throughout the contract which will make the contract depl
 
 An example of such redundant code is
 
-```typescript=
+```
 if (msg.value < minBidIncrement) revert();
 uint minBidValue = existing.value + minBidIncrement;
 if (existing.hasBid){
@@ -95,7 +95,7 @@ if (msg.value <= existing.value) revert();
 
 Remove redundant code to decrease the gas cost. It can potentially save the amount that is used just to execute the functions. The above mentioned code can be replaced with
 
-```typescript=
+```
 require(msg.value >= existing.value + minBidIncrement);
 ```
 A number of recommendations to save gas is also listed in the suggestions. 
@@ -110,7 +110,7 @@ Constructor function contains multiple loops and duplicate code which makes the 
 
 Suggestions are given as comments
 
-```typescript=
+```
 function BradyCoin() public payable {
     owner = msg.sender; // Make use of Ownable.sol which will handle ownership. 
     totalSupply = 12;                                  
@@ -148,7 +148,7 @@ function setInitialOwners() private {
 
 It is suggested to raise an event after completing the task. It prevents the event listener from performing other operations before the task is actually completed.
 
-```typescript=
+```
 BradyBidWithdrawn(bradyIndex, bid.value, msg.sender);
 bradyBids[bradyIndex] = Bid(false, bradyIndex, address(0), 0);
 msg.sender.transfer(bid.value);
@@ -158,7 +158,7 @@ msg.sender.transfer(bid.value);
 
 The event is raised even before the amount is transferred to the bidder or the bid array is reset. This can be modified as follows. Follow the similar structure for all events.
 
-```typescript=
+```
 bradyBids[bradyIndex] = Bid(false, bradyIndex, address(0), 0);
 msg.sender.transfer(bid.value);
 BradyBidWithdrawn(bradyIndex, bid.value, msg.sender);
@@ -171,7 +171,7 @@ Modifiers are the standard to check eligibility for function call. Make use of m
 
 Create a modifier to check for withdraw status. The same patterns can be followed for others.
 
-```typescript=
+```
 // modifier declaration
 modifier restrictWithdrawal() {
     require(canWithdraw);
@@ -186,7 +186,7 @@ function withdrawBidForBrady(uint bradyIndex) restrictWithdrawal public {}
 
 It is suggested to use `memory` for declaring local variables inside functions. Using `storage` is not necessary unless you are trying to modify the solidity state. `memory` also consumes less gas when comparing with `storage`.
 
-```typescript=
+```
 Bid storage bid = bradyBids[bradyIndex];
 Offer storage offer = bradyIsOfferedForSale[bradyIndex];
 ```
@@ -195,7 +195,7 @@ Offer storage offer = bradyIsOfferedForSale[bradyIndex];
 
 Use `memory` during local variable declaration.
 
-```typescript=
+```
 Bid memory bid = bradyBids[bradyIndex];
 Offer memory offer = bradyIsOfferedForSale[bradyIndex];
 ```
@@ -204,7 +204,7 @@ Offer memory offer = bradyIsOfferedForSale[bradyIndex];
 
 Use `require` for checking condition inside functions. This helps in better code readability and follows solidity best practices.
 
-```typescript=
+```
 if (bradyIndex >= totalSupply) revert();
 if (msg.sender == bradyIndexToAddress[bradyIndex]) revert();
 ```
@@ -213,7 +213,7 @@ if (msg.sender == bradyIndexToAddress[bradyIndex]) revert();
 
 The `if` `revert` conditions can be replaced with `require`
 
-```typescript=
+```
 require(bradyIndex < totalSupply);
 require(msg.sender != bradyIndexToAddress[bradyIndex]);
 ```
@@ -226,7 +226,7 @@ There are standard libraries available for handling tasks in a smart contract. T
 
 Ownable contract from OpenZepplin can be used to handle the ownership of the contract and restrict access.
 
-```typescript=
+```
 // Import ownable.sol
 import "./Ownable.sol";
 
@@ -240,7 +240,7 @@ For checking invalid empty address, address(0) is the more standard approach.
 
 **Recommendation**
 
-```typescript=
+```
 require(bradyIndexToAddress[bradyIndex] != address(0));
 ```
 
@@ -248,14 +248,14 @@ require(bradyIndexToAddress[bradyIndex] != address(0));
 
 Follow consistency when assigning a value to a variable and actually using it.
 
-```typescript=
+```
 if (bradyIndexToAddress[bradyIndex] != msg.sender) revert();
 address seller = msg.sender;
 BradyBought(bradyIndex, bid.value, seller, bid.bidder);
 ```
 **Recommendation**
 
-```typescript=
+```
 require(bradyIndexToAddress[bradyIndex] == msg.sender);
 BradyBought(bradyIndex, bid.value, msg.sender, bid.bidder);
 ```
@@ -264,7 +264,7 @@ BradyBought(bradyIndex, bid.value, msg.sender, bid.bidder);
 
 Since the index is from 0 to totalSupply, array can also be used to achieve the functionality. Arrays can reduce the gas amount and provides more features like returning the whole array using a view function.
 
-```typescript=
+```
 mapping (uint => address) public bradyIndexToAddress;
 mapping (uint => Offer) public bradyIsOfferedForSale;
 mapping (uint => Bid) public bradyBids;
@@ -274,7 +274,7 @@ mapping (uint => Bid) public bradyBids;
 
 It also helps restrict access to values greater than totalSupply.
 
-```typescript=
+```
 uint256 private constant TOTAL_SUPPLY = 12;
 
 address[TOTAL_SUPPLY] public bradyIndexToAddress;
